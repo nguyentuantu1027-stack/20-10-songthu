@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chúc Mừng 20/10 Song Thư - Tuấn Tú</title>
+    <!-- Tailwind CSS for UI Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Montserrat:ital,wght@0,300;0,400;0,600;0,800;1,300&family=Pacifico&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020205;
+            font-family: 'Montserrat', sans-serif;
+            color: #ffffff;
+        }
+
+        canvas#stageCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: block;
+        }
+
+        /* Overlay UI Container */
+        .ui-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Dialogue Speech Bubble - Đã mở rộng khung và chỉnh khoảng cách */
+        .speech-bubble {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px) scale(0.9);
+            background: rgba(8, 12, 28, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            box-shadow: 
+                0 0 30px rgba(0, 229, 255, 0.3),
+                inset 0 0 20px rgba(0, 229, 255, 0.15);
+            border-radius: 24px;
+            padding: 20px 36px;
+            max-width: 95vw;
+            width: 620px; /* Tăng chiều dài khung */
+            text-align: center;
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 20;
+        }
+
+        .speech-bubble.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 12px 12px 0 12px;
+            border-style: solid;
+            border-color: rgba(8, 12, 28, 0.88) transparent transparent transparent;
+        }
+
+        .dialogue-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            font-weight: 500;
+            color: #e0f7fc;
+            letter-spacing: 2px; /* Tăng khoảng cách giữa các chữ cho thoáng */
+            word-spacing: 4px; /* Tăng khoảng cách giữa các từ */
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.7);
+            min-height: 1.6em;
+        }
+
+        /* Title Header */
+        .title-header {
+            opacity: 0;
+            transform: translateY(-30px);
+            transition: all 1.5s ease-out;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .title-header.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .main-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(3rem, 7.5vw, 5.8rem);
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 30%, #ff0844 70%, #ffb199 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 25px rgba(0, 229, 255, 0.7));
+            line-height: 1.1;
+            letter-spacing: 2px;
+        }
+
+        .sub-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: clamp(1.5rem, 3.8vw, 2.6rem);
+            color: #ff99cc;
+            text-shadow: 0 0 15px rgba(255, 105, 180, 0.9);
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+
+        /* Controls Toolbar */
+        .controls-wrapper {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            gap: 12px;
+            z-index: 30;
+        }
+
+        .btn-round {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(10, 15, 30, 0.7);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            color: #00e5ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .btn-round:hover {
+            background: rgba(0, 229, 255, 0.25);
+            border-color: #00e5ff;
+            color: #ffffff;
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
+        }
+
+        .btn-replay {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(40px);
+            padding: 12px 32px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(255,20,147,0.3));
+            border: 1px solid rgba(0, 229, 255, 0.6);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 30;
+        }
+
+        .btn-replay.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .btn-replay:hover {
+            background: linear-gradient(135deg, rgba(0,229,255,0.5), rgba(255,20,147,0.6));
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.7);
+            transform: translateX(-50%) translateY(-2px) scale(1.05);
+        }
+
+        /* Start Overlay */
+        #start-screen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #080c20 0%, #020205 100%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease, visibility 1s ease;
+            padding: 20px;
+        }
+
+        #start-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .start-btn {
+            padding: 18px 48px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #00c6ff, #0072ff, #ff007f);
+            background-size: 200% 200%;
+            animation: gradientMove 4s ease infinite;
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0 0 30px rgba(0, 198, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 0 50px rgba(255, 0, 127, 0.8);
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating 3D Wish Cards DOM Overlay */
+        .wish-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 15;
+        }
+
+        .wish-card {
+            position: absolute;
+            padding: 14px 24px;
+            background: rgba(8, 14, 32, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            border-radius: 30px;
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(0.9rem, 1.9vw, 1.1rem);
+            font-weight: 500;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px rgba(0, 229, 255, 0.25);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.6);
+            transition: opacity 0.8s ease, transform 0.8s ease, border-color 0.3s ease;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .wish-card:hover {
+            border-color: #ff007f;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.7);
+            z-index: 50 !important;
+        }
+
+        .wish-card.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Rendering Canvas -->
+    <canvas id="stageCanvas"></canvas>
+
+    <!-- UI Overlay Layer -->
+    <div class="ui-layer">
+        <!-- Title Header -->
+        <div id="titleHeader" class="title-header">
+            <h1 class="main-title">Chúc Mừng Ngày 20/10</h1>
+            <p class="sub-title">✨ Dành Tặng Song Thư ✨</p>
+        </div>
+
+        <!-- Speech Bubble for Eyes -->
+        <div id="speechBubble" class="speech-bubble">
+            <p id="dialogueText" class="dialogue-text"></p>
+        </div>
+
+        <!-- Replay Button -->
+        <button id="btnReplay" class="btn-replay interactive">
+            <i class="fa-solid fa-rotate-right"></i> Xem Lại Màn Chúc
+        </button>
+    </div>
+
+    <!-- Floating Wishes Overlay -->
+    <div id="wishContainer" class="wish-container"></div>
+
+    <!-- Controls Bar -->
+    <div class="controls-wrapper">
+        <button id="btnAudio" class="btn-round interactive" title="Bật/Tắt Âm Nhạc Synth">
+            <i class="fa-solid fa-music"></i>
+        </button>
+        <button id="btnSparkle" class="btn-round interactive" title="Tạo Thêm Sao Băng & Pháo Hoa">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </button>
+    </div>
+
+    <!-- Start Overlay Screen -->
+    <div id="start-screen">
+        <div class="text-center max-w-lg px-4">
+            <div class="mb-6 inline-block relative">
+                <i class="fa-solid fa-eye text-cyan-400 text-6xl animate-pulse"></i>
+                <i class="fa-solid fa-heart text-pink-500 text-2xl absolute -top-2 -right-2 animate-bounce"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-cyan-200 mb-4" style="font-family: 'Great Vibes', cursive; letter-spacing: 2px;">
+                Gửi Song Thư...
+            </h1>
+            <p class="text-cyan-100 text-sm md:text-base font-light mb-8 leading-relaxed opacity-90 tracking-wide">
+                Một không gian đêm huyền ảo với tuyết rơi, sao băng và pháo hoa được tạo riêng bởi <strong class="text-cyan-300 font-semibold">Tuấn Tú</strong> dành cho <strong class="text-pink-300 font-semibold">Song Thư</strong> nhân ngày Phụ Nữ Việt Nam 20/10.
+            </p>
+            <button id="btnStart" class="start-btn interactive">
+                <i class="fa-solid fa-sparkles mr-2"></i> MỞ MÓN QUÀ
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const STATE = {
+            phase: 'IDLE',
+            width: window.innerWidth,
+            height: window.innerHeight,
+            time: 0,
+            audioEnabled: false,
+            mouse: { x: window.innerWidth / 2, y: window.innerHeight / 2, active: false }
+        };
+
+        const canvas = document.getElementById('stageCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('start-screen');
+        const btnStart = document.getElementById('btnStart');
+        const speechBubble = document.getElementById('speechBubble');
+        const dialogueText = document.getElementById('dialogueText');
+        const titleHeader = document.getElementById('titleHeader');
+        const wishContainer = document.getElementById('wishContainer');
+        const btnReplay = document.getElementById('btnReplay');
+        const btnAudio = document.getElementById('btnAudio');
+        const btnSparkle = document.getElementById('btnSparkle');
+
+        const WISHES = [
+            "🌸 Chúc Song Thư 20/10 luôn tràn ngập niềm vui và hạnh phúc!",
+            "✨ Chúc cô gái đẹp nhất của tớ hong bao giờ bùn rầu!",
+            "💖 Cảm ơn Song Thư vì đã xuất hiện và làm thế giới của Tuấn Tú thêm rực rỡ!",
+            "🌹 Mong mọi điều ngọt ngào nhất trên đời luôn đến với Song Thư!",
+            "💫 20/10 vạn điều như ý, đậu được NV1 như ý nguyện!",
+            "🪷 Mong ngày tháng sau này của Song Thư muộn phiền đều tan biến!",
+        ];
+
+        // Đã sửa lại khoảng cách chữ cho từng câu thoại rõ ràng, không bị dính liền
+        const DIALOGUE_SCRIPT = [
+            { text: "Tớ là Tuấn Tú...", delay: 2600 },
+            { text: "Nay là 20/10 á...", delay: 2600 },
+            { text: "Tớ có điều này muốn dành riêng cho Song Thư...", delay: 3200 }
+        ];
+
+        function resizeCanvas() {
+            STATE.width = canvas.width = window.innerWidth;
+            STATE.height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        window.addEventListener('mousemove', (e) => {
+            STATE.mouse.x = e.clientX;
+            STATE.mouse.y = e.clientY;
+            STATE.mouse.active = true;
+            spawnCursorParticles(e.clientX, e.clientY);
+        });
+
+        const random = (min, max) => Math.random() * (max - min) + min;
+        const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+        // ==========================================
+        // WEB AUDIO SYNTHESIZER
+        // ==========================================
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.isInit = false;
+            }
+
+            init() {
+                if (this.isInit) return;
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                    this.isInit = true;
+                    this.playAmbientPad();
+                } catch(e) {
+                    console.log("Web Audio API error", e);
+                }
+            }
+
+            playAmbientPad() {
+                if (!this.ctx) return;
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+
+                osc1.type = 'sine';
+                osc2.type = 'triangle';
+                
+                osc1.frequency.setValueAtTime(130.81, this.ctx.currentTime);
+                osc2.frequency.setValueAtTime(196.00, this.ctx.currentTime);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(400, this.ctx.currentTime);
+
+                gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.12, this.ctx.currentTime + 4);
+
+                osc1.connect(filter);
+                osc2.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc1.start();
+                osc2.start();
+            }
+
+            playChime(freq = 523.25) {
+                if (!this.ctx || !STATE.audioEnabled) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 2.5);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 2.5);
+            }
+
+            playExplosionSound() {
+                if (!this.ctx || !STATE.audioEnabled) return;
+                const chord = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                chord.forEach((note, idx) => {
+                    setTimeout(() => {
+                        this.playChime(note);
+                    }, idx * 120);
+                });
+            }
+        }
+
+        const audioEngine = new AudioEngine();
+
+        // ==========================================
+        // MÔ HÌNH NỀN: SAO, TUYẾT & SAO BĂNG
+        // ==========================================
+        class Star {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = random(0, STATE.width);
+                this.y = random(0, STATE.height);
+                this.size = random(0.4, 2.0);
+                this.alpha = random(0.1, 0.9);
+                this.twinkleSpeed = random(0.005, 0.02);
+                this.color = ['#ffffff', '#e0f7fc', '#ffe6f0', '#b3f0ff'][randomInt(0, 3)];
+            }
+            update() {
+                this.alpha += Math.sin(STATE.time * this.twinkleSpeed) * 0.01;
+                if (this.alpha < 0.1) this.alpha = 0.1;
+                if (this.alpha > 1) this.alpha = 1;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Snowflake {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = random(0, STATE.width);
+                this.y = random(-50, STATE.height);
+                this.size = random(1, 3.5);
+                this.speedY = random(0.8, 2.5);
+                this.speedX = random(-0.5, 0.5);
+                this.alpha = random(0.3, 0.8);
+                this.angle = random(0, Math.PI * 2);
+                this.spin = random(0.01, 0.03);
+            }
+            update() {
+                this.angle += this.spin;
+                this.x += this.speedX + Math.sin(this.angle) * 0.4;
+                this.y += this.speedY;
+
+                if (this.y > STATE.height + 10) {
+                    this.reset();
+                    this.y = -10;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = '#00f2fe';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class ShootingStar {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = random(STATE.width * 0.05, STATE.width * 0.95);
+                this.y = random(-50, STATE.height * 0.4);
+                this.length = random(100, 220);
+                this.speed = random(14, 25);
+                this.angle = random(Math.PI * 0.2, Math.PI * 0.32);
+                this.alpha = 1;
+                this.active = false;
+                this.thickness = random(1.5, 3.5);
+            }
+            spawn() {
+                this.reset();
+                this.active = true;
+                audioEngine.playChime(random(1200, 1800));
+            }
+            update() {
+                if (!this.active) return;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.alpha -= 0.012;
+
+                if (this.alpha <= 0 || this.x > STATE.width || this.y > STATE.height) {
+                    this.active = false;
+                }
+            }
+            draw() {
+                if (!this.active) return;
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+
+                const tailX = this.x - Math.cos(this.angle) * this.length;
+                const tailY = this.y - Math.sin(this.angle) * this.length;
+
+                const grad = ctx.createLinearGradient(this.x, this.y, tailX, tailY);
+                grad.addColorStop(0, '#ffffff');
+                grad.addColorStop(0.2, '#00e5ff');
+                grad.addColorStop(0.6, '#ff007f');
+                grad.addColorStop(1, 'transparent');
+
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
+
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(tailX, tailY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#00e5ff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.thickness * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        function drawNebula() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            
+            const grad1 = ctx.createRadialGradient(
+                STATE.width * 0.2, STATE.height * 0.3, 50,
+                STATE.width * 0.2, STATE.height * 0.3, STATE.width * 0.5
+            );
+            grad1.addColorStop(0, 'rgba(0, 180, 216, 0.07)');
+            grad1.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad1;
+            ctx.fillRect(0, 0, STATE.width, STATE.height);
+
+            const grad2 = ctx.createRadialGradient(
+                STATE.width * 0.8, STATE.height * 0.7, 50,
+                STATE.width * 0.8, STATE.height * 0.7, STATE.width * 0.5
+            );
+            grad2.addColorStop(0, 'rgba(255, 0, 127, 0.06)');
+            grad2.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad2;
+            ctx.fillRect(0, 0, STATE.width, STATE.height);
+
+            ctx.restore();
+        }
+
+        // ==========================================
+        // ANIME EYES
+        // ==========================================
+        class AnimeEyes {
+            constructor() {
+                this.centerX = STATE.width / 2;
+                this.centerY = STATE.height * 0.45;
+                this.eyeSpacing = 110;
+                this.pupilOffsetX = 0;
+                this.pupilOffsetY = 0;
+                this.targetPupilX = 0;
+                this.targetPupilY = 0;
+                this.blinkProgress = 0;
+                this.isBlinking = false;
+                this.isFullyClosed = false;
+                this.blushAlpha = 0;
+                this.targetBlush = 0;
+                this.eyeWidth = 55;
+                this.eyeHeight = 65;
+            }
+
+            update() {
+                this.centerX = STATE.width / 2;
+                this.centerY = STATE.height * 0.45;
+                this.eyeSpacing = Math.min(STATE.width * 0.22, 130);
+
+                this.pupilOffsetX += (this.targetPupilX - this.pupilOffsetX) * 0.05;
+                this.pupilOffsetY += (this.targetPupilY - this.pupilOffsetY) * 0.05;
+
+                if (STATE.phase === 'DIALOGUE' && Math.random() < 0.015) {
+                    this.targetPupilX = random(-18, 18);
+                    this.targetPupilY = random(-10, 10);
+                }
+
+                if (!this.isBlinking && !this.isFullyClosed && Math.random() < 0.008) {
+                    this.isBlinking = true;
+                }
+
+                if (this.isBlinking) {
+                    this.blinkProgress += 0.12;
+                    if (this.blinkProgress >= 1) {
+                        this.blinkProgress = 1;
+                        this.isBlinking = false;
+                    }
+                } else if (!this.isFullyClosed && this.blinkProgress > 0) {
+                    this.blinkProgress -= 0.12;
+                    if (this.blinkProgress < 0) this.blinkProgress = 0;
+                }
+
+                if (this.isFullyClosed) {
+                    this.blinkProgress += (1 - this.blinkProgress) * 0.1;
+                }
+
+                this.blushAlpha += (this.targetBlush - this.blushAlpha) * 0.05;
+            }
+
+            draw() {
+                if (STATE.phase === 'HEART_3D' || STATE.phase === 'EXPLODE' || STATE.phase === 'FLOATING_WISHES') return;
+
+                ctx.save();
+
+                const leftEyeX = this.centerX - this.eyeSpacing;
+                const rightEyeX = this.centerX + this.eyeSpacing;
+                const eyeY = this.centerY;
+
+                if (this.blushAlpha > 0.01) {
+                    ctx.save();
+                    ctx.globalAlpha = this.blushAlpha;
+
+                    let blushGrad1 = ctx.createRadialGradient(leftEyeX, eyeY + 50, 5, leftEyeX, eyeY + 50, 60);
+                    blushGrad1.addColorStop(0, 'rgba(255, 50, 120, 0.65)');
+                    blushGrad1.addColorStop(1, 'transparent');
+                    ctx.fillStyle = blushGrad1;
+                    ctx.beginPath();
+                    ctx.ellipse(leftEyeX, eyeY + 50, 65, 30, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    let blushGrad2 = ctx.createRadialGradient(rightEyeX, eyeY + 50, 5, rightEyeX, eyeY + 50, 60);
+                    blushGrad2.addColorStop(0, 'rgba(255, 50, 120, 0.65)');
+                    blushGrad2.addColorStop(1, 'transparent');
+                    ctx.fillStyle = blushGrad2;
+                    ctx.beginPath();
+                    ctx.ellipse(rightEyeX, eyeY + 50, 65, 30, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+
+                const drawSingleEye = (x, y) => {
+                    ctx.save();
+                    ctx.translate(x, y);
+
+                    const scaleY = Math.max(0.02, 1 - this.blinkProgress);
+                    ctx.scale(1, scaleY);
+
+                    ctx.shadowBlur = 35;
+                    ctx.shadowColor = '#00e5ff';
+
+                    ctx.fillStyle = '#061325';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.eyeWidth, this.eyeHeight, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.eyeWidth - 4, this.eyeHeight - 4, 0, 0, Math.PI * 2);
+                    ctx.clip();
+
+                    const irisX = this.pupilOffsetX;
+                    const irisY = this.pupilOffsetY;
+
+                    const irisGrad = ctx.createRadialGradient(irisX, irisY - 10, 5, irisX, irisY, 45);
+                    irisGrad.addColorStop(0, '#ffffff');
+                    irisGrad.addColorStop(0.2, '#80f3ff');
+                    irisGrad.addColorStop(0.55, '#00b4d8');
+                    irisGrad.addColorStop(0.85, '#0077b6');
+                    irisGrad.addColorStop(1, '#023e8a');
+
+                    ctx.fillStyle = irisGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(irisX, irisY, this.eyeWidth - 10, this.eyeHeight - 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#030a16';
+                    ctx.beginPath();
+                    ctx.ellipse(irisX, irisY + 2, 16, 22, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ffffff';
+                    
+                    ctx.beginPath();
+                    ctx.ellipse(irisX - 14, irisY - 16, 12, 16, -Math.PI / 6, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(irisX + 14, irisY + 16, 6, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+
+                    ctx.strokeStyle = '#e0f7fc';
+                    ctx.lineWidth = 5;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#00f2fe';
+                    ctx.beginPath();
+                    ctx.arc(0, -6, this.eyeWidth + 2, Math.PI * 1.15, Math.PI * 1.85);
+                    ctx.stroke();
+
+                    ctx.restore();
+                };
+
+                drawSingleEye(leftEyeX, eyeY);
+                drawSingleEye(rightEyeX, eyeY);
+
+                if (this.blinkProgress > 0.85) {
+                    ctx.save();
+                    ctx.strokeStyle = '#00f2fe';
+                    ctx.lineWidth = 6;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#00f2fe';
+                    ctx.lineCap = 'round';
+
+                    ctx.beginPath();
+                    ctx.arc(leftEyeX, eyeY + 10, 42, Math.PI * 1.2, Math.PI * 1.8);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(rightEyeX, eyeY + 10, 42, Math.PI * 1.2, Math.PI * 1.8);
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // ==========================================
+        // 3D HEART
+        // ==========================================
+        class Heart3D {
+            constructor() {
+                this.nodes = [];
+                this.scale = Math.min(STATE.width, STATE.height) / 38;
+                this.rotX = 0;
+                this.rotY = 0;
+                this.rotZ = 0;
+                this.speedY = 0.022;
+                this.pulse = 0;
+                this.alpha = 0;
+
+                this.generateMesh();
+            }
+
+            generateMesh() {
+                this.nodes = [];
+                const count = 380;
+                for (let i = 0; i < count; i++) {
+                    const t = random(0, Math.PI * 2);
+                    const u = random(-Math.PI, Math.PI);
+
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+                    const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                    const z = (Math.sin(u) * 8) * (1 - Math.abs(t - Math.PI) / Math.PI);
+
+                    this.nodes.push({
+                        baseX: x,
+                        baseY: y,
+                        baseZ: z,
+                        color: ['#00f2fe', '#ff007f', '#ffffff', '#ff99cc'][randomInt(0, 3)]
+                    });
+                }
+            }
+
+            update() {
+                if (STATE.phase !== 'HEART_3D') return;
+
+                this.alpha += (1 - this.alpha) * 0.05;
+                this.pulse += 0.06;
+                this.rotY += this.speedY;
+                this.rotX = Math.sin(this.pulse * 0.5) * 0.2;
+                this.rotZ = Math.cos(this.pulse * 0.3) * 0.15;
+
+                const currentScale = this.scale * (1 + Math.sin(this.pulse) * 0.08);
+
+                this.nodes.forEach(node => {
+                    let x = node.baseX * currentScale;
+                    let y = node.baseY * currentScale;
+                    let z = node.baseZ * currentScale;
+
+                    let x1 = x * Math.cos(this.rotY) - z * Math.sin(this.rotY);
+                    let z1 = z * Math.cos(this.rotY) + x * Math.sin(this.rotY);
+
+                    let y2 = y * Math.cos(this.rotX) - z1 * Math.sin(this.rotX);
+                    let z2 = z1 * Math.cos(this.rotX) + y * Math.sin(this.rotX);
+
+                    let x3 = x1 * Math.cos(this.rotZ) - y2 * Math.sin(this.rotZ);
+                    let y3 = y2 * Math.cos(this.rotZ) + x1 * Math.sin(this.rotZ);
+
+                    const fov = 400;
+                    const perspective = fov / (fov + z2);
+
+                    node.projX = STATE.width / 2 + x3 * perspective;
+                    node.projY = STATE.height * 0.42 + y3 * perspective;
+                    node.projSize = Math.max(0.5, 2.5 * perspective);
+                    node.depth = z2;
+                });
+
+                this.nodes.sort((a, b) => b.depth - a.depth);
+            }
+
+            draw() {
+                if (STATE.phase !== 'HEART_3D' || this.alpha <= 0) return;
+
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+
+                ctx.lineWidth = 0.6;
+                for (let i = 0; i < this.nodes.length; i += 4) {
+                    const n1 = this.nodes[i];
+                    const n2 = this.nodes[(i + 1) % this.nodes.length];
+                    
+                    const dist = Math.hypot(n1.projX - n2.projX, n1.projY - n2.projY);
+                    if (dist < 70) {
+                        ctx.strokeStyle = 'rgba(0, 240, 255, ' + (0.35 * (1 - dist / 70)) + ')';
+                        ctx.beginPath();
+                        ctx.moveTo(n1.projX, n1.projY);
+                        ctx.lineTo(n2.projX, n2.projY);
+                        ctx.stroke();
+                    }
+                }
+
+                this.nodes.forEach(node => {
+                    ctx.save();
+                    ctx.fillStyle = node.color;
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = node.color;
+                    ctx.beginPath();
+                    ctx.arc(node.projX, node.projY, node.projSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                });
+
+                ctx.restore();
+            }
+        }
+
+        // ==========================================
+        // EXPLOSION PARTICLES
+        // ==========================================
+        class ExplosionParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                const angle = random(0, Math.PI * 2);
+                const speed = random(3, 20);
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.size = random(1.5, 5);
+                this.color = ['#00e5ff', '#ff007f', '#ffffff', '#ffd700', '#ff80ab'][randomInt(0, 4)];
+                this.alpha = 1;
+                this.decay = random(0.008, 0.02);
+                this.friction = 0.96;
+                this.gravity = 0.08;
+            }
+
+            update() {
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                if (this.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        let cursorParticles = [];
+        function spawnCursorParticles(x, y) {
+            for (let i = 0; i < 2; i++) {
+                cursorParticles.push({
+                    x: x + random(-5, 5),
+                    y: y + random(-5, 5),
+                    vx: random(-1, 1),
+                    vy: random(-1.5, 0.5),
+                    size: random(1, 3),
+                    alpha: 1,
+                    color: ['#00e5ff', '#ff007f', '#ffffff'][randomInt(0, 2)]
+                });
+            }
+        }
+
+        function updateAndDrawCursorParticles() {
+            for (let i = cursorParticles.length - 1; i >= 0; i--) {
+                const p = cursorParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.025;
+
+                if (p.alpha <= 0) {
+                    cursorParticles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // ==========================================
+        // FLOATING WISH CARDS
+        // ==========================================
+        class WishCardManager {
+            constructor() {
+                this.cards = [];
+                this.angles = [];
+            }
+
+            init() {
+                wishContainer.innerHTML = '';
+                this.cards = [];
+                this.angles = [];
+
+                WISHES.forEach((text, i) => {
+                    const el = document.createElement('div');
+                    el.className = 'wish-card';
+                    el.innerText = text;
+                    wishContainer.appendChild(el);
+
+                    this.cards.push(el);
+                    this.angles.push((i / WISHES.length) * Math.PI * 2);
+
+                    el.addEventListener('click', (e) => {
+                        audioEngine.playChime(random(800, 1400));
+                        for (let k = 0; k < 20; k++) {
+                            explosionParticles.push(new ExplosionParticle(e.clientX, e.clientY));
+                        }
+                    });
+                });
+            }
+
+            update() {
+                if (STATE.phase !== 'FLOATING_WISHES') return;
+
+                const radiusX = Math.min(STATE.width * 0.38, 420);
+                const radiusY = Math.min(STATE.height * 0.28, 220);
+                const centerX = STATE.width / 2;
+                const centerY = STATE.height * 0.52;
+
+                this.cards.forEach((card, i) => {
+                    this.angles[i] += 0.003;
+                    const angle = this.angles[i];
+
+                    const x = centerX + Math.cos(angle) * radiusX;
+                    const y = centerY + Math.sin(angle) * radiusY;
+                    const z = Math.sin(angle);
+
+                    const scale = 0.75 + (z + 1) * 0.25;
+                    const opacity = 0.4 + (z + 1) * 0.3;
+
+                    card.style.left = `${x}px`;
+                    card.style.top = `${y}px`;
+                    card.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                    card.style.opacity = opacity;
+                    card.style.zIndex = Math.floor((z + 1) * 100);
+
+                    if (!card.classList.contains('visible')) {
+                        setTimeout(() => card.classList.add('visible'), i * 300);
+                    }
+                });
+            }
+        }
+
+        let stars = [];
+        let snowflakes = [];
+        let shootingStars = [];
+        let animeEyes = new AnimeEyes();
+        let heart3D = new Heart3D();
+        let explosionParticles = [];
+        let wishManager = new WishCardManager();
+
+        function initBackground() {
+            stars = [];
+            for (let i = 0; i < 220; i++) stars.push(new Star());
+
+            snowflakes = [];
+            for (let i = 0; i < 75; i++) snowflakes.push(new Snowflake());
+
+            shootingStars = [];
+            for (let i = 0; i < 6; i++) shootingStars.push(new ShootingStar());
+        }
+
+        function scheduleShootingStar() {
+            setTimeout(() => {
+                const inactive = shootingStars.find(s => !s.active);
+                if (inactive) inactive.spawn();
+                scheduleShootingStar();
+            }, random(1500, 3500));
+        }
+
+        function runDialogueSequence() {
+            STATE.phase = 'DIALOGUE';
+            speechBubble.classList.add('active');
+            animeEyes.targetBlush = 0.85;
+
+            let index = 0;
+
+            function playNextPhrase() {
+                if (index >= DIALOGUE_SCRIPT.length) {
+                    speechBubble.classList.remove('active');
+                    animeEyes.targetBlush = 0;
+                    animeEyes.isFullyClosed = true;
+                    STATE.phase = 'EYES_CLOSING';
+
+                    setTimeout(() => {
+                        STATE.phase = 'HEART_3D';
+                        audioEngine.playChime(600);
+
+                        setTimeout(() => {
+                            triggerHeartExplosion();
+                        }, 4800);
+
+                    }, 1200);
+
+                    return;
+                }
+
+                const current = DIALOGUE_SCRIPT[index];
+                dialogueText.innerText = '';
+                let charIdx = 0;
+
+                const typeInterval = setInterval(() => {
+                    if (charIdx < current.text.length) {
+                        dialogueText.innerText += current.text.charAt(charIdx);
+                        charIdx++;
+                    } else {
+                        clearInterval(typeInterval);
+                        setTimeout(() => {
+                            index++;
+                            playNextPhrase();
+                        }, current.delay);
+                    }
+                }, 60);
+            }
+
+            playNextPhrase();
+        }
+
+        function triggerHeartExplosion() {
+            STATE.phase = 'EXPLODE';
+            audioEngine.playExplosionSound();
+
+            const cx = STATE.width / 2;
+            const cy = STATE.height * 0.42;
+
+            for (let i = 0; i < 400; i++) {
+                explosionParticles.push(new ExplosionParticle(cx, cy));
+            }
+
+            setTimeout(() => {
+                STATE.phase = 'FLOATING_WISHES';
+                titleHeader.classList.add('show');
+                wishManager.init();
+
+                setTimeout(() => {
+                    btnReplay.classList.add('show');
+                }, 2000);
+            }, 600);
+        }
+
+        function resetSequence() {
+            titleHeader.classList.remove('show');
+            btnReplay.classList.remove('show');
+            speechBubble.classList.remove('active');
+            wishContainer.innerHTML = '';
+            
+            animeEyes = new AnimeEyes();
+            heart3D = new Heart3D();
+            explosionParticles = [];
+
+            runDialogueSequence();
+        }
+
+        function render() {
+            STATE.time += 1;
+
+            ctx.fillStyle = '#020205';
+            ctx.fillRect(0, 0, STATE.width, STATE.height);
+
+            drawNebula();
+
+            stars.forEach(s => { s.update(); s.draw(); });
+            snowflakes.forEach(sf => { sf.update(); sf.draw(); });
+            shootingStars.forEach(s => { s.update(); s.draw(); });
+
+            animeEyes.update();
+            animeEyes.draw();
+
+            heart3D.update();
+            heart3D.draw();
+
+            for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                const p = explosionParticles[i];
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) explosionParticles.splice(i, 1);
+            }
+
+            updateAndDrawCursorParticles();
+            wishManager.update();
+
+            requestAnimationFrame(render);
+        }
+
+        btnStart.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            audioEngine.init();
+            STATE.audioEnabled = true;
+            btnAudio.innerHTML = '<i class="fa-solid fa-music"></i>';
+
+            scheduleShootingStar();
+            runDialogueSequence();
+        });
+
+        btnAudio.addEventListener('click', () => {
+            STATE.audioEnabled = !STATE.audioEnabled;
+            if (STATE.audioEnabled) {
+                audioEngine.init();
+                btnAudio.innerHTML = '<i class="fa-solid fa-music"></i>';
+            } else {
+                btnAudio.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            }
+        });
+
+        btnSparkle.addEventListener('click', () => {
+            shootingStars.forEach(s => s.spawn());
+            for (let i = 0; i < 50; i++) {
+                explosionParticles.push(new ExplosionParticle(
+                    random(STATE.width * 0.2, STATE.width * 0.8),
+                    random(STATE.height * 0.2, STATE.height * 0.6)
+                ));
+            }
+        });
+
+        btnReplay.addEventListener('click', () => {
+            resetSequence();
+        });
+
+        window.onload = () => {
+            initBackground();
+            requestAnimationFrame(render);
+        };
+    </script>
+</body>
+</html>
